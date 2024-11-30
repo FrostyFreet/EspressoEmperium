@@ -1,37 +1,35 @@
-import {Box, Button, Grid, Pagination,Image} from "@mantine/core";
-import {Link} from "react-router";
-import {useEffect, useState} from "react";
-
-import {dataType} from "../types.tsx";
+import { Box, Button, Grid, Pagination, Image } from "@mantine/core";
+import { Link } from "react-router";
+import { useEffect, useState } from "react";
 import axios from "axios";
-export default function MainComponent(){
-    const[data,setData]=useState<dataType[]>([]);
-    useEffect(()=>{
-          axios.get('http://localhost:3000/fetchData')
+import { dataType } from "../types.tsx";
+
+export default function MainComponent() {
+    const [data, setData] = useState<dataType[]>([]);
+    const ItemsPerPage = 4;
+    const [activePage, setPage] = useState(1);
+
+    useEffect(() => {
+        axios.get('http://localhost:3000/fetchCoffeeMachines')
             .then((response) => {
-                setData(response.data)
+                setData(response.data);
             })
             .catch((error) => {
-                // Handle any errors here
                 console.error('Error fetching data:', error);
             });
-    },[])
-    const ItemsPerPage=4
-    const [activePage, setPage] = useState(1);
+    }, []);
+
     const start = (activePage - 1) * ItemsPerPage;
     const end = activePage * ItemsPerPage;
-
-    const paginatedItems:dataType[] = data.slice(start, end);
-    console.log(data)
-
+    const paginatedItems = data.slice(start, end);
 
     return (
         <Box style={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
             {/* Main content */}
             <Box style={{ flex: 1 }}>
                 <Grid grow justify="center" align="stretch" gutter="lg">
-                    {paginatedItems.map((i) => (
-                        <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={i.id}>
+                    {paginatedItems.map((item) => (
+                        <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={item.id}>
                             <Box
                                 style={{
                                     display: "flex",
@@ -44,8 +42,8 @@ export default function MainComponent(){
                                 }}
                             >
                                 <Image
-                                    src={i.image_paths[0]}
-                                    alt={i.name}
+                                    src={item.image_paths[0]}
+                                    alt={item.name}
                                     style={{
                                         width: "150px",
                                         height: "150px",
@@ -54,14 +52,39 @@ export default function MainComponent(){
                                     }}
                                 />
                                 <Box style={{ flex: 1 }}>
-                                    <h2 style={{ margin: "0 0 0.5rem 0", fontSize: "1.5rem" }}>{i.name}</h2>
-                                    <p style={{ margin: "0 0 0.5rem 0", color: "#555" }}>{i.description}</p>
+                                    <h2 style={{ margin: "0 0 0.5rem 0", fontSize: "1.5rem" }}>{item.name}</h2>
+                                    <p style={{ margin: "0 0 0.5rem 0", color: "#555" }}>{item.description}</p>
                                     <p style={{ margin: "0 0 0.5rem 0", fontWeight: "bold" }}>
                                         Stock:{" "}
-                                        <span style={{ color: i.stock > 0 ? "green" : "red" }}>{i.stock}</span>
+                                        {item.stock > 0 ?
+                                            <span style={{color:"green" }}>In Stock</span>
+                                            :
+                                            <span style={{color:"red"}}>Out of Stock</span>
+                                        }
+
                                     </p>
-                                    <p style={{ margin: "0 0 1rem 0", fontWeight: "bold" }}>Price: ${i.price}</p>
-                                    <Link to={`/${i.id}`}>
+
+                                    {/* Price Section */}
+                                    {item.discounted ? (
+                                        <>
+                                            <p style={{ margin: "0 0 1rem 0", fontWeight: "bold", color: 'red' }}>
+                                                Price: ${item.discountedprice}
+                                            </p>
+                                            <p style={{
+                                                textDecoration: "line-through",
+                                                color: "#999",
+                                                fontSize: "16px"
+                                            }}>
+                                                Original Price: ${item.price}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <p style={{ margin: "0 0 1rem 0", fontWeight: "bold" }}>
+                                            Price: ${item.price}
+                                        </p>
+                                    )}
+
+                                    <Link to={`/${item.id}`}>
                                         <Button variant="contained" color="primary">
                                             Show More
                                         </Button>

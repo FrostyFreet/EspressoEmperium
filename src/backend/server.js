@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
     res.send('Hello World!')
 })
 
-app.get('/fetchData',async (req,res)=>{
+app.get('/fetchCoffeeMachines',async (req,res)=>{
     const data = await client.query(`
     SELECT 
         coffee_machines.*, 
@@ -34,7 +34,7 @@ app.get('/fetchData',async (req,res)=>{
     }
 })
 
-app.get('/fetchDataForPopular',async (req,res)=>{
+app.get('/fetchPopularCoffeeMachines',async (req,res)=>{
     const data = await client.query(`
     SELECT 
         coffee_machines.*, 
@@ -54,7 +54,7 @@ app.get('/fetchDataForPopular',async (req,res)=>{
         res.status(500).send('Internal Server Error');
     }
 })
-app.get('/fetchData/:id',async (req,res)=>{
+app.get('/fetchCoffeeMachines/:id',async (req,res)=>{
     const id=req.params.id
     const data = await client.query(`
         SELECT
@@ -69,6 +69,50 @@ app.get('/fetchData/:id',async (req,res)=>{
         GROUP BY
             coffee_machines.id;
     `);
+    try {
+        res.json(data.rows)
+    }
+    catch (e) {
+        console.error('Error fetching data:', e);
+        res.status(500).send('Internal Server Error');
+    }
+})
+
+app.get('/fetchDiscounts',async (req,res)=>{
+    const data = await client.query(`
+    SELECT 
+        coffee_machines.*, 
+        array_agg(images.path) AS image_paths
+    FROM 
+        coffee_machines
+    
+    JOIN 
+        images ON coffee_machines.id = images.coffee_machine_id
+    WHERE coffee_machines.discounted=true
+    GROUP BY 
+        coffee_machines.id;
+`);
+    try {
+        res.json(data.rows)
+    }
+    catch (e) {
+        console.error('Error fetching data:', e);
+        res.status(500).send('Internal Server Error');
+    }
+})
+
+app.get('/fetchCoffeeBeans',async (req,res)=>{
+    const data = await client.query(`
+    SELECT 
+        coffee_machines.*, 
+        array_agg(images.path) AS image_paths
+    FROM 
+        coffee_machines
+    JOIN 
+        images ON coffee_machines.id = images.coffee_machine_id
+    GROUP BY 
+        coffee_machines.id;
+`);
     try {
         res.json(data.rows)
     }

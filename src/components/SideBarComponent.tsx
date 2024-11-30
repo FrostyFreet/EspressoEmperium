@@ -7,6 +7,7 @@ import {searchTermContext} from "../App.tsx";
 import axios from "axios";
 import {dataType} from "../types.tsx";
 import PopoverComponent from "./PopoverComponent.tsx";
+import { Link } from "react-router";
 
 
 
@@ -22,7 +23,7 @@ export default function SiderBarComponent(){
     const[data,setData]=useState<dataType[]>([]);
     const[filteredDate,setFilteredData]=useState<dataType[]>([]);
     useEffect(()=>{
-        axios.get('http://localhost:3000/fetchData')
+        axios.get('http://localhost:3000/fetchCoffeeMachines')
             .then((response) => {
                 setData(response.data)
             })
@@ -48,15 +49,21 @@ export default function SiderBarComponent(){
                     <Group>
                         <Group>
                             <CiDiscount1 />
-                            <Text  size={"md"} mt={"5px"} style={hoverStyleDiscounts} onMouseEnter={() => setIsHoveredDiscounts(true)} onMouseLeave={() => setIsHoveredDiscounts(false)}>Discounts</Text>
+                            <Link to={"/discounts"} style={{color:'black',textDecoration:'none'}}>
+                                <Text  size={"md"} mt={"5px"} style={hoverStyleDiscounts} onMouseEnter={() => setIsHoveredDiscounts(true)} onMouseLeave={() => setIsHoveredDiscounts(false)}>Discounts</Text>
+                            </Link>
                         </Group>
                         <Group>
                             <PiCoffeeBeanFill />
-                            <Text size={"md"} mt={"5px"} style={hoverStyleCoffeeMachines} onMouseEnter={() => setIsHoveredCoffeeMachines(true)} onMouseLeave={() => setIsHoveredCoffeeMachines(false)}>Coffee Machines</Text>
+                            <Link to={"/coffeemachines"} style={{color:'black',textDecoration:'none'}}>
+                                <Text size={"md"} mt={"5px"} style={hoverStyleCoffeeMachines} onMouseEnter={() => setIsHoveredCoffeeMachines(true)} onMouseLeave={() => setIsHoveredCoffeeMachines(false)}>Coffee Machines</Text>
+                            </Link>
                         </Group>
                         <Group>
                             <MdCoffeeMaker />
-                            <Text size={"md"} mt={"5px"} style={hoverStyleCoffeeBeans} onMouseEnter={() => setIsHoveredCoffeeBeans(true)} onMouseLeave={() => setIsHoveredCoffeeBeans(false)}>Coffee Beans</Text>
+                            <Link to={"/coffeebeans"} style={{color:'black',textDecoration:'none'}}>
+                                 <Text size={"md"} mt={"5px"} style={hoverStyleCoffeeBeans} onMouseEnter={() => setIsHoveredCoffeeBeans(true)} onMouseLeave={() => setIsHoveredCoffeeBeans(false)}>Coffee Beans</Text>
+                            </Link>
                         </Group>
                     </Group>
 

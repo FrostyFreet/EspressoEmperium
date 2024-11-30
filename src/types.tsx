@@ -14,7 +14,9 @@ export interface dataType{
     stock:number,
     price:number,
     image_paths:string[],
-    quantity:number
+    quantity:number,
+    discounted:boolean,
+    discountedprice:number,
 
 }
 

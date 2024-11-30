@@ -5,7 +5,7 @@ import {useContext, useState} from "react";
 import {burgerProps} from "../types.tsx";
 import { Link } from 'react-router';
 import {cartContext} from "../App.tsx";
-import { IconTrash } from '@tabler/icons-react';
+import {IconTrash} from '@tabler/icons-react';
 
 export default function NavbarComponent({toggle,opened}:burgerProps){
     const [isHoveredLogin, setIsHoveredLogin] = useState(false);
@@ -51,10 +51,13 @@ export default function NavbarComponent({toggle,opened}:burgerProps){
                                     </Box>
                                 </Menu.Target>
                                 <Menu.Dropdown>
-                                    <Menu.Label>Cart Items</Menu.Label>
+                                    <Menu.Label style={{fontSize:18}}>
+                                        Cart Items
+                                    </Menu.Label>
                                     {cartItem.length > 0 ? (
                                         cartItem.map((item, index) => (
-                                            <Group key={index} style={{ padding: '10px', borderBottom: '1px solid #f1f1f1' }}>
+                                            <Group key={index} style={{ padding: '10px', borderBottom: '1px solid #f1f1f1', display: "flex",
+                                                justifyContent: "space-between", alignItems: "center"}}>
                                                 <Group>
                                                     <Image src={item.image_paths[0]} alt={item.name} width={40} height={40} fit="cover" style={{ borderRadius: '8px' }} />
                                                     <div>
@@ -63,7 +66,7 @@ export default function NavbarComponent({toggle,opened}:burgerProps){
                                                         <Text size="xs" c="dimmed">Qty: {item.quantity}</Text>
                                                     </div>
                                                 </Group>
-                                                <ActionIcon color="red" onClick={() => handleRemoveItem(item.id)}>
+                                                <ActionIcon color="red"  onClick={() => handleRemoveItem(item.id)} style={{alignSelf: "center"}}>
                                                     <IconTrash size={16} />
                                                 </ActionIcon>
                                             </Group>
