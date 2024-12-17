@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import NavbarComponent from "../components/NavbarComponent.tsx";
 import FooterComponent from "../components/FooterComponent.tsx";
 import SiderBarComponent from "../components/SideBarComponent.tsx";
@@ -10,62 +10,61 @@ import { dataType } from "../types.tsx";
 import axios from "axios";
 import { Carousel } from '@mantine/carousel';
 import { cartContext } from "../App.tsx";
+import {useQuery} from "@tanstack/react-query";
 
 export default function ItemDetailsPage() {
     const [opened, { toggle }] = useDisclosure();
     const params = useParams();
-    const [data, setData] = useState<dataType[]>([]);
-    const [popularData, setPopularData] = useState<dataType[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
     const [quantity, setQuantity] = useState<number>(1);
     const reviews_count = Math.floor(Math.random() * 500);
-    const cachedValue = useMemo(() => reviews_count, [data]);
+
     const { cartItem, setCartItem } = useContext(cartContext)!;
 
-    // Fetch the clicked item details
-    useEffect(() => {
-        axios.get(`http://localhost:3000/fetchCoffeeMachines/${params.id}`)
-            .then((response) => {
-                setData(response.data);
-            })
-            .catch((error) => {
-                console.error('Error fetching data:', error);
-            }).finally(() => setLoading(false));
-    }, [params.id]);
+    const fetchItemDetails=async()=>{
+       return await axios.get(`http://localhost:3000/fetchCoffeeMachines/${params.id}`)
+           .then((response) => response.data)
 
-    // Fetch popular coffee machines
-    useEffect(() => {
-        axios.get(`http://localhost:3000/fetchPopularCoffeeMachines`)
-            .then((response) => {
-                setPopularData(response.data);
-            })
             .catch((error) => {
                 console.error('Error fetching data:', error);
-            }).finally(() => setLoading(false));
-    }, [params.id]);
+            })
+    }
+
+    const fetchPopulerItems=async()=>{
+       return await axios.get(`http://localhost:3000/fetchPopularCoffeeMachines`)
+           .then((response) => response.data)
+            .catch((error) => {
+                console.error('Error fetching data:', error);
+            })
+    }
+    // Fetch the clicked item details
+    const {isLoading:isItemLoading,data:itemData} = useQuery({ queryKey: ['itemDetails'], queryFn: fetchItemDetails })
+    // Fetch popular coffee machines
+    const {data:popularItemsData } = useQuery({ queryKey: ['popularItems'], queryFn: fetchPopulerItems })
+    const cachedValue = useMemo(() => reviews_count, [itemData]);
+
 
     // Handle quantity change
     const handleQuantityChange = (value: number) => { setQuantity(value); };
 
     // Add item to cart
     const handleAddToCart = () => {
-        const contains = cartItem.findIndex((i) => i.id === data[0].id);
+        const contains = cartItem.findIndex((i) => i.id === itemData[0].id);
         if (contains !== -1) {
             const updateCart = [...cartItem];
             updateCart[contains].quantity += quantity;
-            updateCart[contains].price = Number(updateCart[contains].price) + quantity * Number(data[0].price);
+            updateCart[contains].price = Number(updateCart[contains].price) + quantity * Number(itemData[0].price);
             setCartItem(updateCart);
         } else {
             setCartItem((prevState: dataType[]) =>
-                [...prevState, { ...data[0], price: data[0].price * quantity, quantity }]
+                [...prevState, { ...itemData[0], price: itemData[0].price * quantity, quantity }]
             );
         }
     };
 
     // Handle adding popular items to cart
     const handlePopularCartAdd = (id: number) => {
-        const contains = cartItem.findIndex((i) => i.id === id);
-        const found = popularData.find((i) => i.id === id);
+        const contains = cartItem.findIndex((i:dataType) => i.id === id);
+        const found = popularItemsData.find((i:dataType) => i.id === id);
 
         if (found) {
             if (contains !== -1) {
@@ -101,10 +100,10 @@ export default function ItemDetailsPage() {
                 </AppShell.Navbar>
 
                 <AppShell.Main>
-                    {loading ? (
+                    {isItemLoading ? (
                         <Loader />
                     ) : (
-                        <Group gap="md" direction="column" align="stretch">
+                        <Group gap="md" dir="column" align="stretch">
                             {/* Product Image Carousel */}
                             <Carousel
                                 controlsOffset="md"
@@ -116,9 +115,10 @@ export default function ItemDetailsPage() {
                                     backgroundColor: 'rgba(0, 0, 0, 0.05)',
                                     borderRadius: '8px',
                                     padding: '10px',
+                                    loading:'eager'
                                 }}
                             >
-                                {data[0]?.image_paths.map((image: string, index: number) => (
+                                {itemData[0]?.image_paths.map((image: string, index: number) => (
                                     <Carousel.Slide key={index}>
                                         <Image
                                             src={image}
@@ -133,7 +133,7 @@ export default function ItemDetailsPage() {
                             </Carousel>
 
                             <Stack gap="sm" style={{ flex: 1 }}>
-                                <Text fw={500} style={{ fontSize: 32 }}>{data[0].name}</Text>
+                                <Text fw={500} style={{ fontSize: 32 }}>{popularItemsData[0].name}</Text>
 
                                 {/* Rating */}
                                 <Group align="center">
@@ -142,9 +142,9 @@ export default function ItemDetailsPage() {
                                 </Group>
 
                                 {/* Price and Stock */}
-                                {data.map((i) => (
+                                {itemData.map((i:dataType) => (
                                     i.discounted ? (
-                                        <Box style={{ display: "flex", alignItems: "center", marginBottom: "1rem" }} key={i.id}>
+                                        <Box style={{ display: "flex", alignItems: "center" }} key={i.id}>
                                             <Text
                                                 style={{
                                                     fontSize: "24px",
@@ -172,8 +172,10 @@ export default function ItemDetailsPage() {
                                     )
                                 ))}
 
+                                <Text size="sm" style={{ fontSize: 24,}}>{itemData[0]?.description}</Text>
+
                                 {/* Stock */}
-                                <Text size="sm" style={{ fontSize: 24 }}>Stock: {data[0]?.stock}</Text>
+                                <Text size="sm" style={{ fontSize: 24 }}><b>Stock:</b> {itemData[0]?.stock}</Text>
 
                                 {/* Quantity Input and Add to Cart */}
                                 <Group align="center">
@@ -191,7 +193,7 @@ export default function ItemDetailsPage() {
 
                             {/* Popular Items */}
                             <Grid style={{ width: '100%', marginTop: '40px', justifyContent: 'center' }}>
-                                {popularData.map((item, index) => (
+                                {popularItemsData.map((item:dataType, index:number) => (
                                     <Grid.Col span={4} key={index}>
                                         <Card
                                             shadow="sm"

@@ -104,14 +104,14 @@ app.get('/fetchDiscounts',async (req,res)=>{
 app.get('/fetchCoffeeBeans',async (req,res)=>{
     const data = await client.query(`
     SELECT 
-        coffee_machines.*, 
-        array_agg(images.path) AS image_paths
+        coffee_beans.*, 
+        array_agg(coffee_beans_images.path) AS image_paths
     FROM 
-        coffee_machines
-    JOIN 
-        images ON coffee_machines.id = images.coffee_machine_id
+        coffee_beans
+    JOIN    
+        coffee_beans_images ON coffee_beans.id = coffee_beans_images.coffee_beans_id
     GROUP BY 
-        coffee_machines.id;
+        coffee_beans.id;
 `);
     try {
         res.json(data.rows)

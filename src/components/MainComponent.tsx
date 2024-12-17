@@ -1,23 +1,30 @@
 import { Box, Button, Grid, Pagination, Image } from "@mantine/core";
 import { Link } from "react-router";
-import { useEffect, useState } from "react";
+import {useState } from "react";
 import axios from "axios";
 import { dataType } from "../types.tsx";
+import {useQuery} from "@tanstack/react-query";
 
 export default function MainComponent() {
-    const [data, setData] = useState<dataType[]>([]);
     const ItemsPerPage = 4;
     const [activePage, setPage] = useState(1);
 
-    useEffect(() => {
-        axios.get('http://localhost:3000/fetchCoffeeMachines')
-            .then((response) => {
-                setData(response.data);
-            })
+    const fetchCoffeeMachines=async()=>{
+        return axios.get(`http://localhost:3000/fetchCoffeeMachines`)
+            .then((response) => response.data)
             .catch((error) => {
                 console.error('Error fetching data:', error);
-            });
-    }, []);
+            })
+    }
+    const {data,isLoading,isError} = useQuery({ queryKey: ['data'], queryFn: fetchCoffeeMachines })
+
+    if (isLoading) {
+        return <p>Loading...</p>;
+    }
+
+    if (isError || !data) {
+        return <p>Error loading data.</p>;
+    }
 
     const start = (activePage - 1) * ItemsPerPage;
     const end = activePage * ItemsPerPage;
@@ -28,7 +35,7 @@ export default function MainComponent() {
             {/* Main content */}
             <Box style={{ flex: 1 }}>
                 <Grid grow justify="center" align="stretch" gutter="lg">
-                    {paginatedItems.map((item) => (
+                    {paginatedItems.map((item:dataType) => (
                         <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={item.id}>
                             <Box
                                 style={{

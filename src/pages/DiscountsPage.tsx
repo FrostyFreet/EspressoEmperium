@@ -3,35 +3,39 @@ import { AppShell, Box, Button, Grid, Image, Pagination } from "@mantine/core";
 import NavbarComponent from "../components/NavbarComponent.tsx";
 import SiderBarComponent from "../components/SideBarComponent.tsx";
 import FooterComponent from "../components/FooterComponent.tsx";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { dataType } from "../types.tsx";
 import { Link } from "react-router";
+import {useQuery} from "@tanstack/react-query";
 
 export default function DiscountsPage() {
     const [opened, { toggle }] = useDisclosure();
-    const [discountedData, setDiscountedData] = useState<dataType[]>([]);
     const ItemsPerPage = 4;
     const [activePage, setPage] = useState(1);
     const start = (activePage - 1) * ItemsPerPage;
     const end = activePage * ItemsPerPage;
 
-    const paginatedItems: dataType[] = discountedData.slice(start, end);
-    useEffect(() => {
-        axios
-            .get('http://localhost:3000/fetchDiscounts')
-            .then((response) => {
-                setDiscountedData(response.data);
-            })
+    const fetchDiscountedItems=async()=>{
+        return axios.get(`http://localhost:3000/fetchDiscounts`)
+            .then((response) => response.data)
             .catch((error) => {
                 console.error('Error fetching data:', error);
-            });
-    }, []);
+            })
+    }
+    const {data:discountedData,isLoading,isError} = useQuery({ queryKey: ['discountedData'], queryFn: fetchDiscountedItems })
+    const paginatedItems: dataType[] = discountedData ? discountedData.slice(start, end) : [];
 
-    const discounted: boolean[] = discountedData.map((i) => i.discounted);
-    const discountedPrice: number[] = discountedData.map((i) => i.discountedprice);
-    console.log(discountedPrice)
-    console.log(discounted)
+    if (isLoading) {
+        return <p>Loading...</p>;
+    }
+
+    if (isError || !discountedData) {
+        return <p>Error loading data.</p>;
+    }
+
+    const discounted: boolean[] = discountedData.map((i:dataType) => i.discounted);
+
 
     return (
         <AppShell
