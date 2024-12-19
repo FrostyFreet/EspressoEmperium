@@ -10,7 +10,7 @@ export default function MainComponent() {
     const [activePage, setPage] = useState(1);
 
     const fetchCoffeeMachines=async()=>{
-        return axios.get(`http://localhost:3000/fetchCoffeeMachines`)
+        return axios.get(`http://localhost:3000/fetchAllData`)
             .then((response) => response.data)
             .catch((error) => {
                 console.error('Error fetching data:', error);
@@ -36,7 +36,7 @@ export default function MainComponent() {
             <Box style={{ flex: 1 }}>
                 <Grid grow justify="center" align="stretch" gutter="lg">
                     {paginatedItems.map((item:dataType) => (
-                        <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={item.id}>
+                        <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={`${item.type}-${item.id}`}>
                             <Box
                                 style={{
                                     display: "flex",
@@ -91,7 +91,7 @@ export default function MainComponent() {
                                         </p>
                                     )}
 
-                                    <Link to={`/${item.id}`}>
+                                    <Link to={`/${item.id}/${item.name}`}>
                                         <Button variant="contained" color="primary">
                                             Show More
                                         </Button>

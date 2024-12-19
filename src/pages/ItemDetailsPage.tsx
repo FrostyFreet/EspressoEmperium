@@ -1,4 +1,3 @@
-import { useParams } from "react-router";
 import { useContext, useMemo, useState } from "react";
 import NavbarComponent from "../components/NavbarComponent.tsx";
 import FooterComponent from "../components/FooterComponent.tsx";
@@ -6,65 +5,80 @@ import SiderBarComponent from "../components/SideBarComponent.tsx";
 import { useDisclosure } from "@mantine/hooks";
 import '@mantine/carousel/styles.css';
 import {AppShell, Box, Button, Card, Grid, Group, Image, Loader, NumberInput, Stack, Text} from "@mantine/core";
-import { dataType } from "../types.tsx";
-import axios from "axios";
+import {dataType} from "../types.tsx";
 import { Carousel } from '@mantine/carousel';
 import { cartContext } from "../App.tsx";
 import {useQuery} from "@tanstack/react-query";
 
+import axios from "axios";
+import {useParams} from "react-router";
+
 export default function ItemDetailsPage() {
     const [opened, { toggle }] = useDisclosure();
-    const params = useParams();
     const [quantity, setQuantity] = useState<number>(1);
     const reviews_count = Math.floor(Math.random() * 500);
-
     const { cartItem, setCartItem } = useContext(cartContext)!;
-
+    const { id, name } = useParams();
     const fetchItemDetails=async()=>{
-       return await axios.get(`http://localhost:3000/fetchCoffeeMachines/${params.id}`)
-           .then((response) => response.data)
+        return await axios.get(`http://localhost:3000/fetchCoffeeMachines/${id}/${name}`)
+            .then((response) => response.data)
 
             .catch((error) => {
                 console.error('Error fetching data:', error);
             })
     }
-
     const fetchPopulerItems=async()=>{
-       return await axios.get(`http://localhost:3000/fetchPopularCoffeeMachines`)
-           .then((response) => response.data)
+        return await axios.get(`http://localhost:3000/fetchPopularCoffeeMachines`)
+            .then((response) => response.data)
             .catch((error) => {
                 console.error('Error fetching data:', error);
             })
     }
+
+
     // Fetch the clicked item details
     const {isLoading:isItemLoading,data:itemData} = useQuery({ queryKey: ['itemDetails'], queryFn: fetchItemDetails })
     // Fetch popular coffee machines
     const {data:popularItemsData } = useQuery({ queryKey: ['popularItems'], queryFn: fetchPopulerItems })
     const cachedValue = useMemo(() => reviews_count, [itemData]);
 
-
     // Handle quantity change
     const handleQuantityChange = (value: number) => { setQuantity(value); };
 
     // Add item to cart
     const handleAddToCart = () => {
-        const contains = cartItem.findIndex((i) => i.id === itemData[0].id);
+        const contains = cartItem.findIndex((i) => i.id === itemData[0].id && i.name===itemData[0].name);
+
         if (contains !== -1) {
+            // Item already in cart, update its quantity and price
             const updateCart = [...cartItem];
             updateCart[contains].quantity += quantity;
-            updateCart[contains].price = Number(updateCart[contains].price) + quantity * Number(itemData[0].price);
+
+            // Check if the item has a discount
+            if (updateCart[contains].discounted) {
+                // Update the discounted price based on the new quantity
+                updateCart[contains].discountedprice = Number(updateCart[contains].discountedprice) + (quantity * Number(itemData[0].discountedprice));
+                updateCart[contains].price = Number(updateCart[contains].discountedprice); // Set total price to discounted price
+            } else {
+                // Update regular price if no discount is applied
+                updateCart[contains].price += quantity * Number(itemData[0].price);
+            }
+
             setCartItem(updateCart);
         } else {
-            setCartItem((prevState: dataType[]) =>
-                [...prevState, { ...itemData[0], price: itemData[0].price * quantity, quantity }]
-            );
+            // Item not in cart, add it with the correct price
+            const newItem = {
+                ...itemData[0],
+                price: itemData[0].discounted ? itemData[0].discountedprice * quantity : itemData[0].price * quantity,
+                quantity,
+            };
+
+            setCartItem((prevState) => [...prevState, newItem]);
         }
     };
-
-    // Handle adding popular items to cart
-    const handlePopularCartAdd = (id: number) => {
+    const handlePopularCartAdd = (id: number,name:string,) => {
         const contains = cartItem.findIndex((i:dataType) => i.id === id);
-        const found = popularItemsData.find((i:dataType) => i.id === id);
+        const found = popularItemsData.find((i:dataType) => i.id === id && i.name===name) ;
 
         if (found) {
             if (contains !== -1) {
@@ -107,24 +121,22 @@ export default function ItemDetailsPage() {
                             {/* Product Image Carousel */}
                             <Carousel
                                 controlsOffset="md"
-                                height={350}
                                 slideGap="md"
                                 dragFree
                                 withIndicators
                                 style={{
                                     backgroundColor: 'rgba(0, 0, 0, 0.05)',
                                     borderRadius: '8px',
-                                    padding: '10px',
+                                    paddingTop: '75px',
                                     loading:'eager'
                                 }}
                             >
-                                {itemData[0]?.image_paths.map((image: string, index: number) => (
-                                    <Carousel.Slide key={index}>
+                                {itemData && itemData.length > 0 && itemData[0]?.image_paths.map((image: string, index: number) => (
+                                    <Carousel.Slide key={`${itemData.id}-${index}`}>
                                         <Image
                                             src={image}
                                             alt={`Image ${index + 1}`}
-                                            height={350}
-                                            width="100%"
+                                            height={300}
                                             fit="contain"
                                             style={{ width: '100%' }}
                                         />
@@ -133,7 +145,7 @@ export default function ItemDetailsPage() {
                             </Carousel>
 
                             <Stack gap="sm" style={{ flex: 1 }}>
-                                <Text fw={500} style={{ fontSize: 32 }}>{popularItemsData[0].name}</Text>
+                                <Text fw={500} style={{ fontSize: 32 }}>{itemData[0].name}</Text>
 
                                 {/* Rating */}
                                 <Group align="center">
@@ -193,8 +205,8 @@ export default function ItemDetailsPage() {
 
                             {/* Popular Items */}
                             <Grid style={{ width: '100%', marginTop: '40px', justifyContent: 'center' }}>
-                                {popularItemsData.map((item:dataType, index:number) => (
-                                    <Grid.Col span={4} key={index}>
+                                {popularItemsData.map((item:dataType,index:number) => (
+                                    <Grid.Col span={4} key={`${item.type}-${item.id}-${index}`}>
                                         <Card
                                             shadow="sm"
                                             padding="md"
@@ -213,9 +225,10 @@ export default function ItemDetailsPage() {
                                             </Text>
                                             <Text style={{ fontSize: 14, textAlign: 'center' }}>${item.price}</Text>
                                             <Group mt="md" style={{ justifyContent: 'center' }}>
-                                                <Button variant="outline" color="blue" onClick={() => handlePopularCartAdd(item.id)}>
+                                                <Button variant="outline" color="blue" onClick={() => handlePopularCartAdd(item.id,item.name)}>
                                                     Add to Cart
                                                 </Button>
+
                                             </Group>
                                         </Card>
                                     </Grid.Col>

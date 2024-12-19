@@ -4,10 +4,10 @@ import NavbarComponent from "../components/NavbarComponent.tsx";
 import SiderBarComponent from "../components/SideBarComponent.tsx";
 import FooterComponent from "../components/FooterComponent.tsx";
 import { useState } from "react";
-import axios from "axios";
 import { dataType } from "../types.tsx";
-import { Link } from "react-router";
+import {Link} from "react-router";
 import {useQuery} from "@tanstack/react-query";
+import axios from "axios";
 
 export default function DiscountsPage() {
     const [opened, { toggle }] = useDisclosure();
@@ -26,13 +26,11 @@ export default function DiscountsPage() {
     const {data:discountedData,isLoading,isError} = useQuery({ queryKey: ['discountedData'], queryFn: fetchDiscountedItems })
     const paginatedItems: dataType[] = discountedData ? discountedData.slice(start, end) : [];
 
-    if (isLoading) {
-        return <p>Loading...</p>;
-    }
 
-    if (isError || !discountedData) {
-        return <p>Error loading data.</p>;
-    }
+
+
+    if (isLoading) {return <p>Loading...</p>;}
+    if (isError || !discountedData) {return <p>Error loading data.</p>;}
 
     const discounted: boolean[] = discountedData.map((i:dataType) => i.discounted);
 
@@ -57,7 +55,7 @@ export default function DiscountsPage() {
                     <Box style={{ flex: 1 }}>
                         <Grid grow justify="center" align="stretch" gutter="lg">
                             {paginatedItems.map((i) => (
-                                <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={i.id}>
+                                <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={`${i.type}-${i.id}`}>
                                     <Box
                                         style={{
                                             display: "flex",
@@ -107,7 +105,7 @@ export default function DiscountsPage() {
                                             )}
 
                                             {/* Button */}
-                                            <Link to={`/${i.id}`}>
+                                            <Link to={`/${i.id}/${i.name}`}>
                                                 <Button variant="contained" color="primary" style={{ marginTop: "1rem" }}>
                                                     Show More
                                                 </Button>

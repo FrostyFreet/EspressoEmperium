@@ -56,7 +56,7 @@ export default function NavbarComponent({toggle,opened}:burgerProps){
                                     </Menu.Label>
                                     {cartItem.length > 0 ? (
                                         cartItem.map((item, index) => (
-                                            <Group key={index} style={{ padding: '10px', borderBottom: '1px solid #f1f1f1', display: "flex",
+                                            <Group key={(item.id+index)} style={{ padding: '10px', borderBottom: '1px solid #f1f1f1', display: "flex",
                                                 justifyContent: "space-between", alignItems: "center"}}>
                                                 <Group>
                                                     <Image src={item.image_paths[0]} alt={item.name} width={40} height={40} fit="cover" style={{ borderRadius: '8px' }} />

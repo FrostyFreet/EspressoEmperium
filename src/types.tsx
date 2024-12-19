@@ -28,3 +28,15 @@ export interface searchTermContextType {
     searchTerm: string;
     setSearchTerm: React. Dispatch<React. SetStateAction<string>>;
 }
+
+export interface orderType{
+    quantity:number,
+    total_price:number,
+    product_name:string,
+    name:string,
+    address:string,
+    city:string,
+    zipCode:string
+
+}
+

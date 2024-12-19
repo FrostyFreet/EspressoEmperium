@@ -3,16 +3,19 @@ import {AppShell, Box, Button, Grid, Image, Pagination} from "@mantine/core";
 import NavbarComponent from "../components/NavbarComponent.tsx";
 import SiderBarComponent from "../components/SideBarComponent.tsx";
 import FooterComponent from "../components/FooterComponent.tsx";
-import axios from "axios";
 import {useQuery} from "@tanstack/react-query";
 import {dataType} from "../types.tsx";
-import {Link} from "react-router";
-import {useState} from "react";
+import {useContext, useState} from "react";
+import {cartContext} from "../App.tsx";
+import axios from "axios";
 
 export default function CoffeeBeansPage(){
     const [opened, { toggle }] = useDisclosure();
+    const { cartItem, setCartItem } = useContext(cartContext)!;
+    const [quantity] = useState<number>(1);
     const ItemsPerPage = 4;
     const [activePage, setPage] = useState(1);
+
     const fetchCoffeeBeans=async()=>{
         return axios.get(`http://localhost:3000/fetchCoffeeBeans`)
             .then((response) => response.data)
@@ -32,6 +35,41 @@ export default function CoffeeBeansPage(){
     const start = (activePage - 1) * ItemsPerPage;
     const end = activePage * ItemsPerPage;
     const paginatedItems = data.slice(start, end);
+
+    const handleAddToCart = (id: number, name: string) => {
+        const itemData = data.find((item: dataType) => item.id === id);
+        if (!itemData) return; // Exit if the item is not found
+
+        const contains = cartItem.findIndex((i: dataType) => i.id === id && i.name === name);
+
+        if (contains !== -1) {
+            // Update existing item in the cart
+            const updatedCart = [...cartItem];
+            updatedCart[contains].quantity += quantity;
+
+            if (updatedCart[contains].discounted) {
+                updatedCart[contains].price = updatedCart[contains].quantity * itemData.discountedprice;
+            } else {
+                updatedCart[contains].price = updatedCart[contains].quantity * itemData.price;
+            }
+
+            setCartItem(updatedCart);
+        } else {
+            // Add new item to the cart
+            setCartItem((prevState: dataType[]) => [
+                ...prevState,
+                {
+                    ...itemData,
+                    price: (itemData.discounted ? itemData.discountedprice : itemData.price) * quantity,
+                    quantity,
+                },
+            ]);
+        }
+    };
+
+
+
+
     return (
         <>
             <AppShell
@@ -53,7 +91,7 @@ export default function CoffeeBeansPage(){
                         <Box style={{ flex: 1 }}>
                             <Grid grow justify="center" align="stretch" gutter="lg">
                                 {paginatedItems.map((item:dataType) => (
-                                    <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={item.id}>
+                                    <Grid.Col span={{ base: 12, md: 6, lg: 6 }} key={`${item.type}-${item.id}`}>
                                         <Box
                                             style={{
                                                 display: "flex",
@@ -108,11 +146,9 @@ export default function CoffeeBeansPage(){
                                                     </p>
                                                 )}
 
-                                                <Link to={`/${item.id}`}>
-                                                    <Button variant="contained" color="primary">
-                                                        Show More
-                                                    </Button>
-                                                </Link>
+                                                <Button variant="filled" color="blue" onClick={()=>handleAddToCart(item.id,item.name)}>
+                                                    Add to Cart
+                                                </Button>
                                             </Box>
                                         </Box>
                                     </Grid.Col>

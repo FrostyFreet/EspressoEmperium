@@ -23,13 +23,11 @@ function App() {
                         <searchTermContext.Provider value={{searchTerm,setSearchTerm}}>
                             <Routes>
                                 <Route path="/" element={<MainPage/>}/>
-                                <Route path="/:id" element={<ItemDetailsPage/>}/>
+                                <Route path="/:id/:name" element={<ItemDetailsPage/>}/>
                                 <Route path="/checkout" element={<CheckoutPage/>}/>
                                 <Route path="/discounts" element={<DiscountsPage/>}/>
                                 <Route path="/coffeemachines" element={<CoffeeMachinesPage/>}/>
                                 <Route path="/coffeebeans" element={<CoffeeBeansPage/>}/>
-
-
                             </Routes>
                         </searchTermContext.Provider>
                     </cartContext.Provider>
