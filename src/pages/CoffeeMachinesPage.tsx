@@ -110,7 +110,7 @@ export default function CoffeeMachinesPage(){
                                                     </p>
                                                 )}
 
-                                                <Link to={`/${item.id}`}>
+                                                <Link to={`/${item.id}/${item.name}`}>
                                                     <Button variant="contained" color="primary">
                                                         Show More
                                                     </Button>

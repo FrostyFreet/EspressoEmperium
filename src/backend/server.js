@@ -187,14 +187,13 @@ app.get('/fetchCoffeeBeans',async (req,res)=>{
 
 app.post('/sendOrder', async (req, res) => {
     const { cartItems, address, city, zipCode } = req.body;
-
     // Construct shipping address
     const shipping_addr = `${city} ${address} ${zipCode}`;
 
     try {
         // Calculate total price based on cart items
         const totalPrice = cartItems.reduce((acc, item) => {
-            return acc + (item.discounted ? item.discountedprice * item.item_quantity : item.price * item.item_quantity);
+            return acc + item.price
         }, 0);
 
         // Insert order details into orders table
@@ -207,13 +206,13 @@ app.post('/sendOrder', async (req, res) => {
 
         // Prepare ordered items for insertion
         const orderedItemsPromises = cartItems.map(item => {
-            const { item_id, item_name, item_quantity } = item; // Ensure these fields exist in your cartItems
-            const itemTotalPrice = item.discounted ? item.discountedprice * item_quantity : item.price * item_quantity;
+            const { id, name, quantity,price} = item; // Ensure these fields exist in your cartItems
+
 
             return client.query(`
                 INSERT INTO ordered_items (order_id, product_id, product_name, quantity, total_price)
                 VALUES ($1, $2, $3, $4, $5)
-            `, [orderId, item_id, item_name, item_quantity, itemTotalPrice]);
+            `, [orderId, id, name, quantity, price]);
         });
 
         // Execute all insertions for ordered items

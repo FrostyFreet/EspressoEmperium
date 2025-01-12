@@ -9,6 +9,7 @@ import DiscountsPage from "./pages/DiscountsPage.tsx";
 import CoffeeMachinesPage from "./pages/CoffeeMachinesPage.tsx";
 import CoffeeBeansPage from "./pages/CoffeeBeansPage.tsx";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import ProfilePage from "./pages/Profile.tsx";
 
 const queryClient = new QueryClient()
 export const cartContext=createContext<CartContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ function App() {
                                 <Route path="/discounts" element={<DiscountsPage/>}/>
                                 <Route path="/coffeemachines" element={<CoffeeMachinesPage/>}/>
                                 <Route path="/coffeebeans" element={<CoffeeBeansPage/>}/>
+                                <Route path="/profile" element={<ProfilePage/>}/>
                             </Routes>
                         </searchTermContext.Provider>
                     </cartContext.Provider>

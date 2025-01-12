@@ -1,4 +1,4 @@
-import {ActionIcon, Box, Burger, Divider, Flex, Group, Image, Menu, Text} from '@mantine/core';
+import {ActionIcon, Avatar, Box, Burger, Button, Divider, Flex, Group, Image, Menu, Select, Text} from '@mantine/core';
 import logo from '/images/logo.png'
 import { FaShoppingCart } from "react-icons/fa";
 import {useContext, useState} from "react";
@@ -6,6 +6,7 @@ import {burgerProps} from "../types.tsx";
 import { Link } from 'react-router';
 import {cartContext} from "../App.tsx";
 import {IconTrash} from '@tabler/icons-react';
+import {useAuth0} from "@auth0/auth0-react";
 
 export default function NavbarComponent({toggle,opened}:burgerProps){
     const [isHoveredLogin, setIsHoveredLogin] = useState(false);
@@ -13,7 +14,7 @@ export default function NavbarComponent({toggle,opened}:burgerProps){
     //const cartRef = useRef(null)
     const hoverStyleLogin = {textDecoration: isHoveredLogin ? 'underline 2px solid black' : 'none', cursor: 'pointer',};
     const {cartItem,setCartItem}=useContext(cartContext)!
-
+    const { isAuthenticated,user, loginWithRedirect, logout } = useAuth0();
     const handleRemoveItem=(id:number)=>{
         const updatedCart = cartItem.filter(item => item.id !== id);
         setCartItem(updatedCart)
@@ -35,14 +36,35 @@ export default function NavbarComponent({toggle,opened}:burgerProps){
 
                         {/*Login and Cart*/}
                         <Group mr={"10px"} mt={"8px"}>
-                            <Text
-                                size="md"
-                                mr={"md"}
-                                onMouseEnter={() => setIsHoveredLogin(true)}
-                                onMouseLeave={() => setIsHoveredLogin(false)}
-                                style={hoverStyleLogin}>
-                                Login
-                            </Text>
+                            {!isAuthenticated ? (
+                                <Text
+                                    onClick={loginWithRedirect}
+                                    size="md"
+                                    mr={"md"}
+                                    onMouseEnter={() => setIsHoveredLogin(true)}
+                                    onMouseLeave={() => setIsHoveredLogin(false)}
+                                    style={hoverStyleLogin}
+                                >
+                                    Login
+                                </Text>
+                            ) : (
+                                <Menu  style={{ marginRight: "15px" }}>
+                                    <Menu.Target>
+                                        <Avatar
+                                            src={user?.picture}
+                                            alt={user?.name}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                    </Menu.Target>
+                                    <Menu.Dropdown>
+                                        <Menu.Label>{user?.name}</Menu.Label>
+                                        <Menu.Item component={Link} to="/profile">Profile</Menu.Item>
+                                        <Menu.Item component={Link} to="/orders">Orders</Menu.Item>
+                                        <Divider />
+                                        <Menu.Item color="red" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>Logout</Menu.Item>
+                                    </Menu.Dropdown>
+                                </Menu>
+                            )}
 
                             <Menu position="bottom-start" opened={openMenu} onChange={setOpenMenu} arrowPosition="center">
                                 <Menu.Target>
@@ -80,7 +102,9 @@ export default function NavbarComponent({toggle,opened}:burgerProps){
                                 </Link>
                                 </Menu.Dropdown>
                             </Menu>
+
                         </Group>
+
                     </Flex>
 
 

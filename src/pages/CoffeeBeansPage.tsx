@@ -5,14 +5,13 @@ import SiderBarComponent from "../components/SideBarComponent.tsx";
 import FooterComponent from "../components/FooterComponent.tsx";
 import {useQuery} from "@tanstack/react-query";
 import {dataType} from "../types.tsx";
-import {useContext, useState} from "react";
-import {cartContext} from "../App.tsx";
+import {useState} from "react";
+
 import axios from "axios";
+import {Link} from "react-router";
 
 export default function CoffeeBeansPage(){
     const [opened, { toggle }] = useDisclosure();
-    const { cartItem, setCartItem } = useContext(cartContext)!;
-    const [quantity] = useState<number>(1);
     const ItemsPerPage = 4;
     const [activePage, setPage] = useState(1);
 
@@ -35,38 +34,6 @@ export default function CoffeeBeansPage(){
     const start = (activePage - 1) * ItemsPerPage;
     const end = activePage * ItemsPerPage;
     const paginatedItems = data.slice(start, end);
-
-    const handleAddToCart = (id: number, name: string) => {
-        const itemData = data.find((item: dataType) => item.id === id);
-        if (!itemData) return; // Exit if the item is not found
-
-        const contains = cartItem.findIndex((i: dataType) => i.id === id && i.name === name);
-
-        if (contains !== -1) {
-            // Update existing item in the cart
-            const updatedCart = [...cartItem];
-            updatedCart[contains].quantity += quantity;
-
-            if (updatedCart[contains].discounted) {
-                updatedCart[contains].price = updatedCart[contains].quantity * itemData.discountedprice;
-            } else {
-                updatedCart[contains].price = updatedCart[contains].quantity * itemData.price;
-            }
-
-            setCartItem(updatedCart);
-        } else {
-            // Add new item to the cart
-            setCartItem((prevState: dataType[]) => [
-                ...prevState,
-                {
-                    ...itemData,
-                    price: (itemData.discounted ? itemData.discountedprice : itemData.price) * quantity,
-                    quantity,
-                },
-            ]);
-        }
-    };
-
 
 
 
@@ -145,10 +112,12 @@ export default function CoffeeBeansPage(){
                                                         Price: ${item.price}
                                                     </p>
                                                 )}
+                                                <Link to={`/${item.id}/${item.name}`}>
+                                                    <Button variant="filled" color="blue">
+                                                        Show more
+                                                    </Button>
+                                                </Link>
 
-                                                <Button variant="filled" color="blue" onClick={()=>handleAddToCart(item.id,item.name)}>
-                                                    Add to Cart
-                                                </Button>
                                             </Box>
                                         </Box>
                                     </Grid.Col>

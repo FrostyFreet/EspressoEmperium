@@ -21,7 +21,7 @@ const schema = z.object({
 
 export default function CheckoutPage() {
     const [opened, { toggle }] = useDisclosure();
-    const { cartItem } = useContext(cartContext)!;
+    const { cartItem,setCartItem } = useContext(cartContext)!;
     const { register, formState: { errors }, handleSubmit } = useForm<orderType>({
         resolver: zodResolver(schema)
     });
@@ -34,12 +34,13 @@ export default function CheckoutPage() {
         try {
             const orderData = { ...data, cartItems: cartItem };
             await axios.post('http://localhost:3000/sendOrder', orderData);
+            setCartItem([]);
+
         } catch (e) {
             console.log(e);
         }
 
     };
-
 
     console.log(cartItem)
     return (
@@ -85,7 +86,7 @@ export default function CheckoutPage() {
                                                         </Box>
                                                     </Group>
                                                     <Text fw={700} mr={"lg"}>
-                                                        Price: {(item.price)}
+                                                        Price: ${(item.price)}
                                                     </Text>
                                                 </Group>
                                                 {/* Divider after each item */}

@@ -4,12 +4,11 @@ import FooterComponent from "../components/FooterComponent.tsx";
 import SiderBarComponent from "../components/SideBarComponent.tsx";
 import { useDisclosure } from "@mantine/hooks";
 import '@mantine/carousel/styles.css';
-import {AppShell, Box, Button, Card, Grid, Group, Image, Loader, NumberInput, Stack, Text} from "@mantine/core";
+import {AppShell, Box, Button, Card, Grid, Group, Image, Loader, Modal, NumberInput, Stack, Text} from "@mantine/core";
 import {dataType} from "../types.tsx";
 import { Carousel } from '@mantine/carousel';
 import { cartContext } from "../App.tsx";
 import {useQuery} from "@tanstack/react-query";
-
 import axios from "axios";
 import {useParams} from "react-router";
 
@@ -19,6 +18,15 @@ export default function ItemDetailsPage() {
     const reviews_count = Math.floor(Math.random() * 500);
     const { cartItem, setCartItem } = useContext(cartContext)!;
     const { id, name } = useParams();
+    const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+
+    const handleImageClick = (image: string) => {
+        setEnlargedImage(image);
+    };
+
+    const handleCloseModal = () => {
+        setEnlargedImage(null);
+    };
     const fetchItemDetails=async()=>{
         return await axios.get(`http://localhost:3000/fetchCoffeeMachines/${id}/${name}`)
             .then((response) => response.data)
@@ -35,7 +43,6 @@ export default function ItemDetailsPage() {
             })
     }
 
-
     // Fetch the clicked item details
     const {isLoading:isItemLoading,data:itemData} = useQuery({ queryKey: ['itemDetails'], queryFn: fetchItemDetails })
     // Fetch popular coffee machines
@@ -44,7 +51,6 @@ export default function ItemDetailsPage() {
 
     // Handle quantity change
     const handleQuantityChange = (value: number) => { setQuantity(value); };
-
     // Add item to cart
     const handleAddToCart = () => {
         const contains = cartItem.findIndex((i) => i.id === itemData[0].id && i.name===itemData[0].name);
@@ -97,6 +103,8 @@ export default function ItemDetailsPage() {
     };
 
 
+
+
     return (
         <>
             <AppShell
@@ -119,30 +127,66 @@ export default function ItemDetailsPage() {
                     ) : (
                         <Group gap="md" dir="column" align="stretch">
                             {/* Product Image Carousel */}
-                            <Carousel
-                                controlsOffset="md"
-                                slideGap="md"
-                                dragFree
-                                withIndicators
-                                style={{
-                                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                                    borderRadius: '8px',
-                                    paddingTop: '75px',
-                                    loading:'eager'
-                                }}
+                            {itemData[0].image_paths.length > 1 ? (
+                                <Carousel
+                                    controlsOffset="md"
+                                    slideGap="md"
+                                    dragFree
+                                    withIndicators
+                                    style={{
+                                        border: '0.1px solid black',
+                                        borderRadius: '8px',
+                                        paddingTop: '50px',
+                                    }}
+                                >
+                                    {itemData[0]?.image_paths.map((image: string, index: number) => (
+                                        <Carousel.Slide key={`${itemData[0].id}-${index}`}>
+                                            <Image
+                                                src={image}
+                                                alt={`Image ${index + 1}`}
+                                                height={300}
+                                                fit="contain"
+                                                style={{ width: '100%' }}
+                                                onClick={() => handleImageClick(image)}
+                                            />
+                                        </Carousel.Slide>
+                                    ))}
+                                </Carousel>
+                            ) : <Image
+                                src={itemData[0].image_paths[0]}
+                                alt={`${itemData[0].name}`}
+                                height={300}
+                                fit="contain"
+                                style={{ width: '100%' }}
+                                onClick={() => handleImageClick(itemData[0].image_paths)}
+                            /> }
+
+                            <Modal
+                                opened={enlargedImage}
+                                onClose={handleCloseModal}
+                                size="lg"
+                                centered
                             >
-                                {itemData && itemData.length > 0 && itemData[0]?.image_paths.map((image: string, index: number) => (
-                                    <Carousel.Slide key={`${itemData.id}-${index}`}>
-                                        <Image
-                                            src={image}
-                                            alt={`Image ${index + 1}`}
-                                            height={300}
-                                            fit="contain"
-                                            style={{ width: '100%' }}
-                                        />
-                                    </Carousel.Slide>
-                                ))}
-                            </Carousel>
+                                <Carousel
+                                    controlsOffset="sm"
+                                    slideGap="sm"
+                                    dragFree
+                                    withIndicators
+                                    style={{ width: '100%', height: 'auto' }}
+                                >
+                                    {itemData?.[0]?.image_paths.map((image: string, index: number) => (
+                                        <Carousel.Slide key={`modal-${itemData[0].id}-${index}`}>
+                                            <Image
+                                                src={image}
+                                                alt={`Enlarged Image ${index + 1}`}
+                                                height={500}
+                                                fit="contain"
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Carousel.Slide>
+                                    ))}
+                                </Carousel>
+                            </Modal>
 
                             <Stack gap="sm" style={{ flex: 1 }}>
                                 <Text fw={500} style={{ fontSize: 32 }}>{itemData[0].name}</Text>
@@ -193,13 +237,24 @@ export default function ItemDetailsPage() {
                                 <Group align="center">
                                     <NumberInput
                                         value={quantity}
-                                        min={1}
+                                        min={1} max={itemData[0].stock}
                                         style={{ width: '80px' }}
                                         onChange={handleQuantityChange}
                                     />
-                                    <Button variant="filled" color="blue" onClick={handleAddToCart}>
-                                        Add to Cart
-                                    </Button>
+                                    {cartItem.some((i) =>
+                                        i.id === itemData[0].id &&
+                                        i.name === itemData[0].name &&
+                                        (i.quantity + quantity) > itemData[0].stock // Check if adding this quantity exceeds stock
+                                    ) ? (
+                                        <Button disabled variant="outline" color="blue">
+                                            Out of Stock
+                                        </Button>
+                                    ) : (
+                                        <Button variant="filled" color="blue" onClick={handleAddToCart}>
+                                            Add to Cart
+                                        </Button>
+                                    )}
+
                                 </Group>
                             </Stack>
 
@@ -225,10 +280,19 @@ export default function ItemDetailsPage() {
                                             </Text>
                                             <Text style={{ fontSize: 14, textAlign: 'center' }}>${item.price}</Text>
                                             <Group mt="md" style={{ justifyContent: 'center' }}>
-                                                <Button variant="outline" color="blue" onClick={() => handlePopularCartAdd(item.id,item.name)}>
-                                                    Add to Cart
-                                                </Button>
-
+                                                {cartItem.some((i) =>
+                                                    i.id === item.id &&
+                                                    i.name === item.name &&
+                                                    (i.quantity + 1) > item.stock // Check if adding one more exceeds stock for this specific popular item
+                                                ) ? (
+                                                    <Button disabled variant="outline" color="blue">
+                                                        Out of Stock
+                                                    </Button>
+                                                ) : (
+                                                    <Button variant="outline" color="blue" onClick={() => handlePopularCartAdd(item.id, item.name)}>
+                                                        Add to Cart
+                                                    </Button>
+                                                )}
                                             </Group>
                                         </Card>
                                     </Grid.Col>
