@@ -33,6 +33,7 @@ export default function ItemDetailsPage() {
 
             .catch((error) => {
                 console.error('Error fetching data:', error);
+                return []
             })
     }
     const fetchPopulerItems=async()=>{
@@ -90,7 +91,7 @@ export default function ItemDetailsPage() {
             if (contains !== -1) {
                 const updateCart = [...cartItem];
                 updateCart[contains].quantity += quantity;
-                updateCart[contains].price += quantity * Number(found.price);
+                updateCart[contains].price += found.discounted ? Number(found.discountedprice) * quantity : Number(found.price)*quantity;
                 setCartItem(updateCart);
             } else {
                 setCartItem((prevState) =>
@@ -103,6 +104,7 @@ export default function ItemDetailsPage() {
     };
 
 
+    console.log(itemData)
 
 
     return (
@@ -127,7 +129,7 @@ export default function ItemDetailsPage() {
                     ) : (
                         <Group gap="md" dir="column" align="stretch">
                             {/* Product Image Carousel */}
-                            {itemData[0].image_paths.length > 1 ? (
+                            {itemData[0]?.image_paths?.length > 1 ? (
                                 <Carousel
                                     controlsOffset="md"
                                     slideGap="md"
@@ -211,6 +213,7 @@ export default function ItemDetailsPage() {
                                             >
                                                 ${i.discountedprice}
                                             </Text>
+
                                             <Text
                                                 style={{
                                                     textDecoration: "line-through",
@@ -221,6 +224,7 @@ export default function ItemDetailsPage() {
                                                 ${i.price}
                                             </Text>
                                         </Box>
+
                                     ) : (
                                         <Text style={{ fontSize: 24, color: "black" }} key={i.id}>
                                             Price: ${i.price}
@@ -244,7 +248,7 @@ export default function ItemDetailsPage() {
                                     {cartItem.some((i) =>
                                         i.id === itemData[0].id &&
                                         i.name === itemData[0].name &&
-                                        (i.quantity + quantity) > itemData[0].stock // Check if adding this quantity exceeds stock
+                                        (i.quantity + quantity) > itemData[0].stock
                                     ) ? (
                                         <Button disabled variant="outline" color="blue">
                                             Out of Stock
@@ -278,12 +282,12 @@ export default function ItemDetailsPage() {
                                             <Text mt="md" style={{ fontSize: 16, fontWeight: 500, textAlign: 'center' }}>
                                                 {item.name}
                                             </Text>
-                                            <Text style={{ fontSize: 14, textAlign: 'center' }}>${item.price}</Text>
+                                            <Text style={{ fontSize: 14, textAlign: 'center' }}>${item.discounted ? item.discountedprice : item.price}</Text>
                                             <Group mt="md" style={{ justifyContent: 'center' }}>
                                                 {cartItem.some((i) =>
                                                     i.id === item.id &&
                                                     i.name === item.name &&
-                                                    (i.quantity + 1) > item.stock // Check if adding one more exceeds stock for this specific popular item
+                                                    (i.quantity + 1) > item.stock
                                                 ) ? (
                                                     <Button disabled variant="outline" color="blue">
                                                         Out of Stock

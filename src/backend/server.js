@@ -91,21 +91,21 @@ app.get('/fetchCoffeeMachines/:id/:name', async (req, res) => {
         const data = await client.query(
             `
                 SELECT
-                    coffee_machines.id, coffee_machines.name, coffee_machines.price, coffee_machines.discountedprice,
-                    coffee_machines.description, coffee_machines.stock,
+                    coffee_machines.id, coffee_machines.name, coffee_machines.price,
+                    coffee_machines.discountedPrice, coffee_machines.description, coffee_machines.stock,
+                    coffee_machines.description,coffee_machines.discounted::bool AS discounted,
                     array_agg(images.path) AS image_paths
                 FROM coffee_machines
                          JOIN images ON coffee_machines.id = images.coffee_machine_id
-                WHERE
-                    coffee_machines.id = $1 AND coffee_machines.name ILIKE $2
-                GROUP BY
-                    coffee_machines.id
+                WHERE coffee_machines.id = $1 AND coffee_machines.name ILIKE $2
+                GROUP BY coffee_machines.id
 
                 UNION ALL
 
                 SELECT
-                    coffee_beans.id, coffee_beans.name, coffee_beans.price, coffee_beans.discountedprice,
-                    coffee_beans.description, coffee_beans.stock,
+                    coffee_beans.id,coffee_beans.name,coffee_beans.price,
+                    coffee_beans.discountedprice,coffee_beans.description,coffee_beans.stock,
+                    coffee_beans.description,coffee_beans.discounted::bool AS discounted,
                     array_agg(coffee_beans_images.path) AS image_paths
                 FROM coffee_beans
                          JOIN coffee_beans_images ON coffee_beans.id = coffee_beans_images.coffee_beans_id
@@ -186,7 +186,8 @@ app.get('/fetchCoffeeBeans',async (req,res)=>{
 })
 
 app.post('/sendOrder', async (req, res) => {
-    const { cartItems, address, city, zipCode } = req.body;
+    const { cartItems, address, city, zipCode,user_id } = req.body;
+    console.log(req.body)
     // Construct shipping address
     const shipping_addr = `${city} ${address} ${zipCode}`;
 
@@ -198,9 +199,9 @@ app.post('/sendOrder', async (req, res) => {
 
         // Insert order details into orders table
         const orders = await client.query(`
-            INSERT INTO orders (shipping_address, total_price)
-            VALUES ($1, $2) RETURNING id
-        `, [shipping_addr, totalPrice]);
+            INSERT INTO orders (shipping_address, total_price,user_id)
+            VALUES ($1, $2,$3) RETURNING id
+        `, [shipping_addr, totalPrice,user_id]);
 
         const orderId = orders.rows[0].id; // Get the generated order ID
 
@@ -226,6 +227,24 @@ app.post('/sendOrder', async (req, res) => {
     }
 });
 
+app.get(`/fetchUserOrders/:user_id`,async(req, res)=>{
+    const { user_id } = req.params;
+    try {
+        const result = await client.query(
+            'SELECT * FROM orders join ordered_items oi on orders.id = oi.order_id WHERE user_id = $1',
+            [user_id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'No orders found for this user.' });
+        }
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Error fetching user orders:', error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+})
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)

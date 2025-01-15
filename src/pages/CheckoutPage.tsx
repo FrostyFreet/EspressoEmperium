@@ -3,13 +3,15 @@ import NavbarComponent from "../components/NavbarComponent.tsx";
 import SiderBarComponent from "../components/SideBarComponent.tsx";
 import FooterComponent from "../components/FooterComponent.tsx";
 import { useDisclosure } from "@mantine/hooks";
-import { useContext } from "react";
+import {useContext, useEffect, useState,} from "react";
 import { cartContext } from "../App.tsx";
 import { dataType, orderType } from "../types.tsx";
 import { SubmitHandler, useForm } from "react-hook-form";
 import axios from "axios";
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import {supabase} from "../App.tsx";
+import {useQuery} from "@tanstack/react-query";
 
 // Define validation schema
 const schema = z.object({
@@ -22,6 +24,7 @@ const schema = z.object({
 export default function CheckoutPage() {
     const [opened, { toggle }] = useDisclosure();
     const { cartItem,setCartItem } = useContext(cartContext)!;
+    const[user,setUser]=useState([])
     const { register, formState: { errors }, handleSubmit } = useForm<orderType>({
         resolver: zodResolver(schema)
     });
@@ -30,11 +33,29 @@ export default function CheckoutPage() {
     const shippingCost = 10.0;
     const total = subtotal + shippingCost;
 
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data } = await supabase.auth.getUser();
+            if (data) {
+                setUser(data.user?.id);
+                console.log("id: "+data.user?.id);
+            }
+        };
+        fetchUser();
+
+    }, []);
+
+
     const onSubmit: SubmitHandler<orderType> = async (data) => {
         try {
-            const orderData = { ...data, cartItems: cartItem };
-            await axios.post('http://localhost:3000/sendOrder', orderData);
-            setCartItem([]);
+            const orderData = { ...data, cartItems: cartItem,user_id:user };
+            if(cartItem.length>0){
+                await axios.post('http://localhost:3000/sendOrder', orderData);
+                setCartItem([]);
+            }
+           else{
+               console.error("Something went wrong!")
+            }
 
         } catch (e) {
             console.log(e);
@@ -42,7 +63,6 @@ export default function CheckoutPage() {
 
     };
 
-    console.log(cartItem)
     return (
         <AppShell
             header={{ height: { base: 48, sm: 60 } }}
@@ -69,7 +89,8 @@ export default function CheckoutPage() {
                                 <Paper withBorder shadow="sm" p="md" radius="md">
                                     <Title order={3} mb="md" ta={"center"}>Your Cart</Title>
                                     <ScrollArea h={600}>
-                                        {cartItem.map((item: dataType) => (
+                                        {cartItem.length>0 ?
+                                            cartItem.map((item: dataType) => (
                                             <div key={`${item.type}-${item.id}`}>
                                                 <Group justify="space-between" mb="md" align="center">
                                                     <Group mt={"lg"}>
@@ -92,7 +113,9 @@ export default function CheckoutPage() {
                                                 {/* Divider after each item */}
                                                 <Divider mb="xl"/>
                                             </div>
-                                        ))}
+                                        )):
+                                            <h2 style={{textAlign:"center"}}>Your cart is empty go and put something in it 😇</h2>
+                                        }
                                     </ScrollArea>
                                 </Paper>
                             </Grid.Col>
